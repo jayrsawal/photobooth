@@ -2,6 +2,7 @@ import base64
 import json
 import time
 import calendar
+import requests
 
 from bottle import route, post, run, static_file, request, response
 from PIL import Image, ImageOps
@@ -85,6 +86,9 @@ def upload():
 
     filename = collage(files)   
     filepath = "/photos/collages/" + filename
+    
+    x = requests.get('localhost:1234/cheese')
+    print(x)
     
     return {
         "photo_url": filepath

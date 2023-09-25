@@ -1,3 +1,6 @@
-photos/
+photos/*
+!photos/.gitkeep
+photos/collages/*
+!photos/collages/.gitkeep
 venv/
 .DS_Store
