@@ -31,17 +31,17 @@ if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
 // Trigger photo take
 document.getElementById("control-three").addEventListener("click", function() {
     resetStage();
-    triggerPhoto(3, 1, "GET READY!", second);
+    triggerPhoto(3, Date.now().toString(), 1, "GET READY!", second);
 });
 
 document.getElementById("control-one").addEventListener("click", function() {
     resetStage();
-    triggerPhoto(3, 1, "GET READY!", save);
+    triggerPhoto(3, Date.now().toString(), 1, "GET READY!", save);
 });
 
 document.getElementById("control-two").addEventListener("click", function() {
     resetStage();
-    triggerPhoto(3, 1, "GET READY!", third);
+    triggerPhoto(3, Date.now().toString(), 1, "GET READY!", third);
 });
 
 
@@ -53,36 +53,25 @@ document.getElementById("collage").addEventListener("mouseout", function() {
     document.getElementById("collage").classList.remove("zoom");
 });
 
-function second() {
+function second(groupId) {
     setTimeout(function() {
-        triggerPhoto(3, 2, "LOOK HERE!", third)
+        triggerPhoto(3, groupId, 2, "LOOK HERE!", third)
     }, 5 * 1000);
 }
 
-function third() {
+function third(groupId) {
     setTimeout(
         function() {
-            triggerPhoto(3, 3, "LAST ONE!", save);
+            triggerPhoto(3, groupId, 3, "LAST ONE!", save);
         }
     , 5 * 1000)
 }
 
-function save() {
+function save(groupId) {
     setTimeout(function() {
         snack("NICE!")
         eatSnack(2)
     }, 1000)
-
-    var raw_data = {}
-
-    var photos = document.getElementById("gallery").getElementsByTagName("img")
-
-    for(i = 1; i <= photos.length; i++) {
-        var data = document.getElementById("photo"+i).getAttribute("src")
-        raw_data["image"+i] = data
-    }
-
-    var data = JSON.stringify(raw_data)
 
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function() {
@@ -93,18 +82,15 @@ function save() {
         }
     }
 
-    xhr.open("POST", "/upload", true);
-    xhr.setRequestHeader('Content-Type', 'application/json');
-    xhr.setRequestHeader('Access-Control-Allow-Origin', '*');
-    xhr.setRequestHeader('Access-Control-Allow-Methods', 'POST,PATCH,OPTIONS');
-    xhr.send(data);
+    xhr.open("GET", "/upload/"+groupId, true);
+    xhr.send();
 
 	document.getElementById("control-one").classList.remove("hide")
     document.getElementById("control-two").classList.remove("hide")
     document.getElementById("control-three").classList.remove("hide")
 }
 
-function triggerPhoto(seconds, photoNum, message, callback) {
+function triggerPhoto(seconds, groupId, photoNum, message, callback) {
 	document.getElementById("overlay").classList.remove("hide")
     var tick = document.getElementById("audio-tick");
     tick.play()
@@ -113,10 +99,10 @@ function triggerPhoto(seconds, photoNum, message, callback) {
     chime.play()
 
 	snack(message)
-    setTimeout(countDown, 1 * 1000, seconds, photoNum, callback)
+    setTimeout(countDown, 1 * 1000, groupId, seconds, photoNum, callback)
 }
 
-function countDown(seconds, photoNum, callback) {
+function countDown(groupId, seconds, photoNum, callback) {
 	document.getElementById("overlay").classList.add("hide")
     
     let count = seconds
@@ -129,18 +115,16 @@ function countDown(seconds, photoNum, callback) {
         count--;
     }
 
-    setTimeout(takePhoto, (seconds+1) * 1000, photoNum, callback);
+    setTimeout(takePhoto, (seconds+1) * 1000, groupId, photoNum, callback);
 }
 
-function takePhoto(photoNum, callback) {
-    var canvas = document.getElementById('canvas');
-    var context = canvas.getContext('2d');
-    var video = document.getElementById('video');
-    var photoId = "photo" + photoNum;
-
-    canvas.height = video.offsetHeight;
-    canvas.width = video.offsetWidth;
-    context.drawImage(video, 0, 0, video.offsetWidth, video.offsetHeight);
+function takePhoto(groupId, photoNum, callback) {
+    // var canvas = document.getElementById('canvas');
+    // var context = canvas.getContext('2d');
+    // var video = document.getElementById('video');
+    // canvas.height = video.offsetHeight;
+    // canvas.width = video.offsetWidth;
+    // context.drawImage(video, 0, 0, video.offsetWidth, video.offsetHeight);
     
     document.getElementById("gallery").classList.remove("hide");
     document.getElementById("gallery").classList.remove("hidden");
@@ -148,24 +132,10 @@ function takePhoto(photoNum, callback) {
     document.getElementById("control-two").classList.add("hide");
     document.getElementById("control-three").classList.add("hide");
 
-    const data = canvas.toDataURL("image/png");
-    
-    document.getElementById(photoId).setAttribute("src", data);
-	document.getElementById(photoId).classList.remove("hide");
-	document.getElementById(photoId).classList.remove("hidden");
-    setTimeout(function() {
-        document.getElementById("gallery").classList.add("hidden");
-        setTimeout(function() {
-            document.getElementById("gallery").classList.add("hide");
-        }, 1000);
-    }, 5000);
-
-    document.getElementById(photoId).setAttribute("src", data);
-    
-    getGif("nice+photo")
+    // const data = canvas.toDataURL("image/png");
+    getPhoto(groupId, photoNum, callback);
     eatSnack(0);
     shutter();
-    callback();
 }
 
 function resetStage() {
@@ -209,6 +179,32 @@ function shutter() {
     setTimeout(function() {
         document.getElementById('shutter').classList.add("hide")
     }, 2000)
+}
+
+function getPhoto(groupId, photoNum, callback) {
+    var photoId = "photo" + photoNum;
+
+    var xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState == XMLHttpRequest.DONE) {
+            document.getElementById(photoId).setAttribute("src", xhr.response);
+            document.getElementById(photoId).classList.remove("hide");
+            document.getElementById(photoId).classList.remove("hidden");
+            setTimeout(function() {
+                document.getElementById("gallery").classList.add("hidden");
+                setTimeout(function() {
+                    document.getElementById("gallery").classList.add("hide");
+                }, 1000);
+            }, 5000);
+
+            document.getElementById(photoId).setAttribute("src", xhr.response);
+            
+            getGif("nice+photo");
+            callback(groupId);
+        }
+    }
+    xhr.open("GET", "/photo/" + groupId + "/" + photoNum, true);
+    xhr.send()
 }
 
 function getGif(message) {

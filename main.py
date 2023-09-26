@@ -2,10 +2,13 @@ import base64
 import json
 import time
 import calendar
-import requests
+import subprocess
+import os
+import sys
 
 from bottle import route, post, run, static_file, request, response
 from PIL import Image, ImageOps
+from io import BytesIO
 
 default_width = 1470
 default_height = 827
@@ -64,37 +67,45 @@ def serve_collage_files(photoName):
     filePath = './photos/collages/'
     return static_file(photoName, filePath)
 
-@post('/upload')
+@route('/upload/<groupId>')
 @enable_cors
-def upload():
-    postdata = json.load(request.body)
-    files = []
-    for i in range(3):
-        n = str(i+1)
-        if postdata["image"+n] is None or postdata["image"+n] == "":
-            continue
-
-        image = postdata["image"+n].split(",")[1]
-
-        current_GMT = time.gmtime()
-        ts = calendar.timegm(current_GMT)
-        filename = str(ts) + ".raw." + n +  ".png"
-        with open("photos/" + filename, "wb") as f:
-            f.write(base64.b64decode(image))
-
-        files.append(filename)
-
-    filename = collage(files)   
+def upload(groupId):
+    root_dir = "photos/"+groupId
+    
+    filename = collage(root_dir, os.listdir(root_dir))   
     filepath = "/photos/collages/" + filename
     
-    x = requests.get('localhost:1234/cheese')
-    print(x)
-    
     return {
-        "photo_url": filepath
+        "photo_url": filepath,
+        "group_id": groupId
     }
+    
+@route('/photo/<groupId>/<photoId>')
+@enable_cors
+def photo(groupId, photoId):
+    root_dir = "photos/"+groupId
+    if not os.path.exists(root_dir):
+        os.makedirs(root_dir)
+        
+    filename = groupId + ".raw." + photoId + ".png"
+    filePath = os.path.abspath(root_dir)
+    result = subprocess.run([r"./lumix_oneshot.exe", filePath, filename], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    
+    data = ""
+    if result.returncode:
+        processedPath = result.stdout.decode(sys.stdout.encoding).strip().replace("\"", "").replace("\\\\\\\\", "\\\\")
+        
+        with Image.open(processedPath) as f:
+            img = f.convert("RGB")
+        
+            with BytesIO() as b:
+                img.save(b, format="JPEG")
+                img_str = base64.b64encode(b.getvalue())    
+                data = bytes("data:image/jpeg;base64,", encoding='utf-8') + img_str
+    
+    return data
 
-def collage(files):
+def collage(root_dir, files):
     numFiles = len(files)
     bg = Image.open("photos/collage3.png").convert("RGB")
     if numFiles == 1:
@@ -104,24 +115,24 @@ def collage(files):
 
     for i in range(numFiles):
         f = files.pop()
-        img = Image.open("photos/" + f).convert("RGB")
-
-        dim = right_dim
-        crop = right2_crop
-        if i == 0:
-            dim = left_dim
-            crop = left_crop
-        elif i == 1:
-            crop = right1_crop
-            if numFiles == 2:
+        with Image.open(os.path.join(root_dir,f)).convert("RGB") as img:
+            dim = right_dim
+            crop = right2_crop
+            if i == 0:
                 dim = left_dim
-                crop = right1_crop_alt
+                crop = left_crop
+            elif i == 1:
+                crop = right1_crop
+                if numFiles == 2:
+                    dim = left_dim
+                    crop = right1_crop_alt
 
-        cropped = fit(img, dim[0], dim[1])
-        bg.paste(cropped, (crop[0], crop[1]))
+            cropped = fit(img, dim[0], dim[1])
+            bg.paste(cropped, (crop[0], crop[1]))
 
     filename = f.split(".")[0] + ".collage.png"
     bg.save("photos/collages/" + filename)
+    bg.close()
     return filename
 
 def fit(img, new_width, new_height):
