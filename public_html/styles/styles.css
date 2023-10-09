@@ -1,3 +1,12 @@
+@font-face {
+    font-family: youmurderer;
+    src: url(youmurderer.ttf);
+}
+
+* {
+    font-family: youmurderer;
+}
+
 html {
     margin: 0 0;
     padding: 0 0;
@@ -62,8 +71,8 @@ body {
     left: 0px;
     left: 50%;
     transform: translate(-50%, 0);
-    background-color: black;
-    color: white;
+    background-color: orange;
+    color: black;
     z-index: 102;
     opacity: 1;
 }
@@ -97,12 +106,21 @@ body {
     width: 480px;
 }
 
-#control-one, #control-two, #control-three {
+#control button {
     font-size: 2em;
-    background-color: black;
-    color: white;
+    background-color: orange;
+    color: black;
     padding: 1em;
     border-radius: 15px;
+    margin: 0.2em;
+    border: 0;
+    opacity: 0.5;
+}
+
+#control button:hover {
+    opacity: 1;
+    color: white;
+    cursor: pointer;
 }
 
 #cheer {

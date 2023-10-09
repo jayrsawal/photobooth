@@ -31,18 +31,18 @@ if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
 // Trigger photo take
 document.getElementById("control-three").addEventListener("click", function() {
     resetStage();
-    triggerPhoto(3, Date.now().toString(), 1, "GET READY!", second);
+    triggerPhoto(3, Date.now().toString(), 1, "GET READY", second);
 });
 
 document.getElementById("control-one").addEventListener("click", function() {
     resetStage();
-    triggerPhoto(3, Date.now().toString(), 1, "GET READY!", save);
+    triggerPhoto(3, Date.now().toString(), 1, "GET READY", save);
 });
 
-document.getElementById("control-two").addEventListener("click", function() {
-    resetStage();
-    triggerPhoto(3, Date.now().toString(), 1, "GET READY!", third);
-});
+// document.getElementById("control-two").addEventListener("click", function() {
+//     resetStage();
+//     triggerPhoto(3, Date.now().toString(), 1, "GET READY", third);
+// });
 
 
 document.getElementById("collage").addEventListener("mouseover", function() {
@@ -55,21 +55,21 @@ document.getElementById("collage").addEventListener("mouseout", function() {
 
 function second(groupId) {
     setTimeout(function() {
-        triggerPhoto(3, groupId, 2, "LOOK HERE!", third)
+        triggerPhoto(3, groupId, 2, "LOOK HERE", third)
     }, 5 * 1000);
 }
 
 function third(groupId) {
     setTimeout(
         function() {
-            triggerPhoto(3, groupId, 3, "LAST ONE!", save);
+            triggerPhoto(3, groupId, 3, "LAST ONE", save);
         }
     , 5 * 1000)
 }
 
 function save(groupId) {
     setTimeout(function() {
-        snack("NICE!")
+        snack("NICE")
         eatSnack(2)
     }, 1000)
 
@@ -86,7 +86,7 @@ function save(groupId) {
     xhr.send();
 
 	document.getElementById("control-one").classList.remove("hide")
-    document.getElementById("control-two").classList.remove("hide")
+    // document.getElementById("control-two").classList.remove("hide")
     document.getElementById("control-three").classList.remove("hide")
 }
 
@@ -126,10 +126,8 @@ function takePhoto(groupId, photoNum, callback) {
     // canvas.width = video.offsetWidth;
     // context.drawImage(video, 0, 0, video.offsetWidth, video.offsetHeight);
     
-    document.getElementById("gallery").classList.remove("hide");
-    document.getElementById("gallery").classList.remove("hidden");
 	document.getElementById("control-one").classList.add("hide");
-    document.getElementById("control-two").classList.add("hide");
+    // document.getElementById("control-two").classList.add("hide");
     document.getElementById("control-three").classList.add("hide");
 
     // const data = canvas.toDataURL("image/png");
@@ -146,7 +144,7 @@ function resetStage() {
     document.getElementById("output").classList.add("hide");
     document.getElementById("gallery").classList.add("hide")
 	document.getElementById("control-one").classList.add("hide")
-    document.getElementById("control-two").classList.add("hide")
+    // document.getElementById("control-two").classList.add("hide")
     document.getElementById("control-three").classList.add("hide")
 }
 
@@ -187,7 +185,9 @@ function getPhoto(groupId, photoNum, callback) {
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function() {
         if (xhr.readyState == XMLHttpRequest.DONE) {
-            document.getElementById(photoId).setAttribute("src", xhr.response);
+            document.getElementById("gallery").classList.remove("hide");
+            document.getElementById("gallery").classList.remove("hidden");
+
             document.getElementById(photoId).classList.remove("hide");
             document.getElementById(photoId).classList.remove("hidden");
             setTimeout(function() {

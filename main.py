@@ -10,18 +10,11 @@ from bottle import route, post, run, static_file, request, response
 from PIL import Image, ImageOps
 from io import BytesIO
 
-default_width = 1470
-default_height = 827
-left_edge_w = 320
-right_edge_w = 322
+border_px = 50
 
-left_dim = (658, 862)
-right_dim = (524, 390)
-
-left_crop = (156, 174, 814, 1036)
-right1_crop = (1080, 178, 1604, 565)
-right2_crop = (1080, 650, 1602, 1040)
-right1_crop_alt = (963, 168, 1623, 1030)
+left_crop = (border_px, border_px, 762, 1150)
+right1_crop = (812, border_px, 1256, 733)
+right2_crop = (1306, border_px, 1750, 735)
 
 # the decorator
 def enable_cors(fn):
@@ -62,9 +55,9 @@ def serve_js_files(jsFile):
     return static_file(jsFile, filePath)
 
 # host js files which will be invoked implicitly by your html files.
-@route('/photos/collages/<photoName>')
-def serve_collage_files(photoName):
-    filePath = './photos/collages/'
+@route('/photos/<groupId>/<photoName>')
+def serve_collage_files(groupId, photoName):
+    filePath = os.path.join('./photos/', groupId)
     return static_file(photoName, filePath)
 
 @route('/upload/<groupId>')
@@ -72,8 +65,8 @@ def serve_collage_files(photoName):
 def upload(groupId):
     root_dir = "photos/"+groupId
     
-    filename = collage(root_dir, os.listdir(root_dir))   
-    filepath = "/photos/collages/" + filename
+    filename = collage(root_dir, [photo for photo in os.listdir(root_dir) if photo != f"{groupId}.png"])
+    filepath = "/photos/" + groupId + "/" + filename
     
     return {
         "photo_url": filepath,
@@ -89,7 +82,7 @@ def photo(groupId, photoId):
         
     filename = groupId + ".raw." + photoId + ".png"
     filePath = os.path.abspath(root_dir)
-    result = subprocess.run([r"./lumix_oneshot.exe", filePath, filename], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    result = subprocess.run([r"./lumix_focusshot.exe", filePath, filename], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     
     data = ""
     if result.returncode:
@@ -107,33 +100,49 @@ def photo(groupId, photoId):
 
 def collage(root_dir, files):
     numFiles = len(files)
-    bg = Image.open("photos/collage3.png").convert("RGB")
+    
+    bg = Image.open("photos/collage-3.png").convert("RGBA")
     if numFiles == 1:
-        bg = Image.open("photos/collage1.png").convert("RGB")
-    elif numFiles == 2:
-        bg = Image.open("photos/collage2.png").convert("RGB")
+        bg = Image.open("photos/collage-1.png").convert("RGBA")
 
-    for i in range(numFiles):
-        f = files.pop()
-        with Image.open(os.path.join(root_dir,f)).convert("RGB") as img:
-            dim = right_dim
-            crop = right2_crop
-            if i == 0:
-                dim = left_dim
-                crop = left_crop
-            elif i == 1:
-                crop = right1_crop
-                if numFiles == 2:
-                    dim = left_dim
-                    crop = right1_crop_alt
-
+    collage = Image.new("RGBA", bg.size)
+    
+    if numFiles == 1:
+        with open(os.path.join(root_dir, files[0]), "rb") as raw_img:
+            img = Image.open(raw_img).convert("RGBA").rotate(-90)
+            crop = (border_px, border_px, collage.size[0]-border_px, collage.size[1]-border_px)
+            dim = (crop[2]-crop[0], crop[3]-crop[1])
             cropped = fit(img, dim[0], dim[1])
-            bg.paste(cropped, (crop[0], crop[1]))
+            collage.paste(cropped, (crop[0], crop[1]))
+            img.close()
 
-    filename = f.split(".")[0] + ".collage.png"
-    bg.save("photos/collages/" + filename)
+    else:
+        paste_three(collage, root_dir, files)
+               
+    collage.paste(bg, (0, 0), bg)
     bg.close()
+
+    filename = files[0].split(".")[0] + ".png"
+    collage.save(os.path.join(root_dir, filename))
+    collage.close()
     return filename
+
+def paste_three(collage, root_dir, files):
+    numFiles = len(files)
+    for i in range(numFiles):
+        f = files[i]
+        with open(os.path.join(root_dir, f), "rb") as raw_img:
+            img = Image.open(raw_img).convert("RGBA").rotate(-90)
+            crop = left_crop
+            if i == 1:
+                crop = right1_crop
+            elif i == 2:
+                crop = right2_crop
+
+            dim = (crop[2]-crop[0], crop[3]-crop[1])
+            cropped = fit(img, dim[0], dim[1])
+            collage.paste(cropped, (crop[0], crop[1]))
+            img.close()    
 
 def fit(img, new_width, new_height):
     return ImageOps.fit(img, (new_width, new_height), method = 0, bleed = 0.0, centering = (0.5, 0.5))
