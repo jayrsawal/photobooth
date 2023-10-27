@@ -104,9 +104,9 @@ def photo(groupId, photoId):
 def collage(root_dir, files):
     numFiles = len(files)
     
-    bg = Image.open("photos/collage-3.png").convert("RGBA")
+    bg = Image.open("templates/collage2-3.png").convert("RGBA")
     if numFiles == 1:
-        bg = Image.open("photos/collage-1.png").convert("RGBA")
+        bg = Image.open("templates/collage2-1.png").convert("RGBA")
 
     collage = Image.new("RGBA", bg.size)
     

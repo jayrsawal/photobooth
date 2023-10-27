@@ -5,14 +5,14 @@ var video = document.getElementById('video');
 var config = { 
     video: {
         width: {
-            min: 1280,
-            ideal: 2160,
-            max: 2160
+            min: 1200,
+            ideal: 1200,
+            max: 1200
         },
         height: {
-            min: 720,
-            ideal: 2160,
-            max: 2160
+            min: 1800,
+            ideal: 1800,
+            max: 1800
         }
     },
     audio: false
