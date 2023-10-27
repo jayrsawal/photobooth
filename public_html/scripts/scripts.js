@@ -76,9 +76,10 @@ function save(groupId) {
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function() {
         if (xhr.readyState == XMLHttpRequest.DONE) {
-            document.getElementById("output").classList.remove("hide");
+            document.getElementById("collage").setAttribute("src", "");
             data = JSON.parse(xhr.responseText)
             document.getElementById("collage").setAttribute("src", data["photo_url"]);
+            document.getElementById("output").classList.remove("hide");
         }
     }
 
@@ -131,9 +132,11 @@ function takePhoto(groupId, photoNum, callback) {
     document.getElementById("control-three").classList.add("hide");
 
     // const data = canvas.toDataURL("image/png");
-    getPhoto(groupId, photoNum, callback);
+    getPhoto(groupId, photoNum, (gid) => {
+        shutter();
+        callback(gid);
+    });
     eatSnack(0);
-    shutter();
 }
 
 function resetStage() {
