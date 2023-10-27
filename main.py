@@ -88,8 +88,11 @@ def photo(groupId, photoId):
     if result.returncode:
         processedPath = result.stdout.decode(sys.stdout.encoding).strip().replace("\"", "").replace("\\\\\\\\", "\\\\")
         
+        while not os.path.isfile(processedPath):
+            time.sleep(0.5)
+
         with Image.open(processedPath) as f:
-            img = f.convert("RGB")
+            img = f.convert("RGB").rotate(-90)
         
             with BytesIO() as b:
                 img.save(b, format="JPEG")
@@ -101,7 +104,7 @@ def photo(groupId, photoId):
 def collage(root_dir, files):
     numFiles = len(files)
     
-    bg = Image.open("photos/collage-3.png").convert("RGBA")
+    bg = Image.open("photos/collage-2.png").convert("RGBA")
     if numFiles == 1:
         bg = Image.open("photos/collage-1.png").convert("RGBA")
 
@@ -110,10 +113,11 @@ def collage(root_dir, files):
     if numFiles == 1:
         with open(os.path.join(root_dir, files[0]), "rb") as raw_img:
             img = Image.open(raw_img).convert("RGBA").rotate(-90)
-            crop = (border_px, border_px, collage.size[0]-border_px, collage.size[1]-border_px)
+            crop = (0,0,1200,1800)
+            # crop = (border_px, border_px, collage.size[0]-border_px, collage.size[1]-border_px)
             dim = (crop[2]-crop[0], crop[3]-crop[1])
-            cropped = fit(img, dim[0], dim[1])
-            collage.paste(cropped, (crop[0], crop[1]))
+            cropped = img.resize(dim)
+            collage.paste(cropped, (0,0))
             img.close()
 
     else:
@@ -140,9 +144,16 @@ def paste_three(collage, root_dir, files):
                 crop = right2_crop
 
             dim = (crop[2]-crop[0], crop[3]-crop[1])
-            cropped = fit(img, dim[0], dim[1])
+            cropped = resize(img, dim[0], dim[1])
             collage.paste(cropped, (crop[0], crop[1]))
             img.close()    
+
+def resize(im, new_width, new_height):
+    scale = new_height / max(im.size)
+    new = Image.new(im.mode, (new_width, new_height), (0, 0, 0))
+    paste = im.resize((int(im.width * scale), int(im.height * scale)), resample=Image.NEAREST)
+    new.paste(paste, (0, 0))
+    return new
 
 def fit(img, new_width, new_height):
     return ImageOps.fit(img, (new_width, new_height), method = 0, bleed = 0.0, centering = (0.5, 0.5))
