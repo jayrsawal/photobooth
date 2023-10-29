@@ -5,12 +5,12 @@ var video = document.getElementById('video');
 var config = { 
     video: {
         width: {
-            min: 1200,
+            min: 400,
             ideal: 1200,
             max: 1200
         },
         height: {
-            min: 1800,
+            min: 600,
             ideal: 1800,
             max: 1800
         }
@@ -45,24 +45,24 @@ document.getElementById("control-one").addEventListener("click", function() {
 // });
 
 
-document.getElementById("collage").addEventListener("mouseover", function() {
-    document.getElementById("collage").classList.add("zoom");
-});
+// document.getElementById("collage").addEventListener("mouseover", function() {
+//     document.getElementById("collage").classList.add("zoom");
+// });
 
-document.getElementById("collage").addEventListener("mouseout", function() {
-    document.getElementById("collage").classList.remove("zoom");
-});
+// document.getElementById("collage").addEventListener("mouseout", function() {
+//     document.getElementById("collage").classList.remove("zoom");
+// });
 
 function second(groupId) {
     setTimeout(function() {
-        triggerPhoto(3, groupId, 2, "LOOK HERE", third)
+        triggerPhoto(3, groupId, 2, "READY?", third)
     }, 5 * 1000);
 }
 
 function third(groupId) {
     setTimeout(
         function() {
-            triggerPhoto(3, groupId, 3, "LAST ONE", save);
+            triggerPhoto(3, groupId, 3, "LAST ONE!", save);
         }
     , 5 * 1000)
 }
@@ -133,9 +133,9 @@ function takePhoto(groupId, photoNum, callback) {
 
     // const data = canvas.toDataURL("image/png");
     getPhoto(groupId, photoNum, (gid) => {
-        shutter();
         callback(gid);
     });
+    shutter();
     eatSnack(0);
 }
 
@@ -166,8 +166,8 @@ function eatSnack(delay) {
 }
 
 function shutter() {
-    var shutter = document.getElementById("audio-shutter");
-    shutter.play()
+    // var shutter = document.getElementById("audio-shutter");
+    // shutter.play()
     var tick = document.getElementById("audio-tick");
     tick.pause()
     tick.currentTime = 0;

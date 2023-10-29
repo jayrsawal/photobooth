@@ -65,7 +65,7 @@ def serve_collage_files(groupId, photoName):
 def upload(groupId):
     root_dir = "photos/"+groupId
     
-    filename = collage(root_dir, [photo for photo in os.listdir(root_dir) if photo != f"{groupId}.png"])
+    filename = collage(root_dir, [photo for photo in os.listdir(root_dir) if photo != f"{groupId}.png" and "png" in photo])
     filepath = "/photos/" + groupId + "/" + filename
     
     return {
@@ -92,8 +92,8 @@ def photo(groupId, photoId):
             time.sleep(0.5)
 
         with Image.open(processedPath) as f:
-            img = f.convert("RGB").rotate(-90)
-        
+            img = f.convert("RGB").rotate(-90, expand=True)
+            img = img.resize((1200,1800))
             with BytesIO() as b:
                 img.save(b, format="JPEG")
                 img_str = base64.b64encode(b.getvalue())    
